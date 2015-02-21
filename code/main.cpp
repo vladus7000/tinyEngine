@@ -1,23 +1,15 @@
 #include <iostream>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
-#include <assimp/cimport.h>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 #include "ShaderProgram.hpp"
 #include "Exception.hpp"
-#include <fstream>
 #include "Model.hpp"
-#include "Material.hpp"
 #include "Stage.hpp"
 #include <memory>
-#include "json/json.h"
 #include <map>
 #include <stdlib.h>
+#include "FileAbstraction.hpp"
+#include "System.hpp"
 
-//#define LUA_BUILD_AS_DLL
 extern "C" {
 # include "lua.h"
 # include "lauxlib.h"
@@ -26,8 +18,9 @@ extern "C" {
 
 #include <LuaBridge.h>
 
-
 using namespace luabridge;
+
+System g_system;
 
 using namespace std;
 using namespace glm;
@@ -41,23 +34,17 @@ class LuaScript;
 void _terminateScript(unsigned int  self);
 map<unsigned int, LuaScript*> scriptsMap;
 glm::mat4 g_proj;
-int width;
-int height;
 
 bool projChanged = false;
 bool newModel = false;
 vector<Model *> g_model;
-void test()
-{
-	cout << "TEST\n";
-}
 
-void setProjection(float angle, float near, float far)
+void setProjection(float a_angle, float a_near, float a_far)
 {
 	projChanged = true;
 
 	g_proj = glm::mat4(1.0f);
-	g_proj = glm::perspective(angle * 3.141592654f / 180.0f/*3.141592654f / 3.0f*/, (float)width / (float)height, near, far);
+	g_proj = glm::perspective(a_angle * 3.141592654f / 180.0f, (float)g_system.GetWidth() / (float)g_system.GetHeight(), a_near, a_far);
 }
 
 class LuaModel
@@ -127,9 +114,6 @@ public:
 						addFunction("printMessage", printMessage).\
 					endNamespace().\
 				endNamespace();
-
-			getGlobalNamespace(m_L).\
-				addFunction("test", test);
 
 			getGlobalNamespace(m_L)\
 					.beginNamespace("engine")\
@@ -212,77 +196,28 @@ void _terminateScript(unsigned int self)
 	}
 }
 
-int main (int argc,const char **argv)
+int main (int argc, const char **argv)
 {
-	GLFWwindow* window = NULL;
-	ifstream inputStream("settings/settings.set");
-	string line;
-	string jsonData;
-
-	if (inputStream)
-	{
-		while ( getline (inputStream,line) )
-		{
-			jsonData.append(line+'\n');
-		}
-	}
-	else
-	{
-		throw Exception("[Main] could not open file: Settings.set");
-	}
-
-	json::Value sub_obj = json::Deserialize(jsonData);
-	json::Value WindowSettings = sub_obj["WindowSettings"];
-	json::Value ShadersData = sub_obj["Shader"];
-
-	width = WindowSettings["width"];
-	height = WindowSettings["height"];
-
-	string windowName = WindowSettings["title"];
-	string vert = ShadersData["vert"];
-	string frag = ShadersData["frag"];
-	string initScript = sub_obj["InitScript"];
-
-	if (!glfwInit())
-		return -1;
-	window = glfwCreateWindow(width, height, windowName.c_str(), NULL, NULL);
-	glfwMakeContextCurrent(window);
-	glewExperimental = GL_TRUE;
-	glewInit();
-
-	LuaScript firstScript(initScript.c_str());
-	if (!window)
-	{
-		glfwTerminate();
-		return -1;
-	}
-
-	float aspect = (float)width / (float)height;
-	glm::mat4 proj = glm::mat4(1.0f);
-	proj = glm::perspective(45.0f * 3.141592654f / 180.0f, 800.0f / 600.0f, 0.3f, 100.f);
+	g_system.Init();
+	LuaScript firstScript(g_system.GetInitScriptName().c_str());
 	ShaderProgram simpleProgram;
 	try
 	{
-		simpleProgram.AttachVertexShader(vert);
-		simpleProgram.AttachPixelShader(frag);
+		simpleProgram.AttachVertexShader(g_system.GetVert());
+		simpleProgram.AttachPixelShader(g_system.GetFrag());
 		simpleProgram.CreateShaderProgram();
 	}
 	catch (Exception &e)
 	{
 		std::cout << e.m_errorMsg << std::endl;
-		aiDetachAllLogStreams();
-		glfwTerminate();
+		g_system.Deinit();
 		return 0;
 	}
 	Stage simpleStage;
-	simpleStage.SetWindowSize(width, height);
+	simpleStage.SetWindowSize(g_system.GetWidth(), g_system.GetHeight());
 	simpleStage.SetShader(simpleProgram);
-	simpleStage.SetProjectionMatrixConstant(proj);
-	aiDetachAllLogStreams();
-
-	float angle = 0.0;
 	static float delta = 0.0;
-	while (!glfwWindowShouldClose(window))
+	while (!g_system.WindowIsClose())
 	{
 		if (projChanged)
 		{
@@ -297,12 +232,11 @@ int main (int argc,const char **argv)
 			newModel = false;
 		}
 		delta += 0.001;
-		simpleStage.Render();
-		glfwSwapBuffers(window);
-		glfwPollEvents();
 		firstScript.mainLoop(delta);
-
+		simpleStage.Render();
+		g_system.Swap();
+		g_system.PollEvent();
 	}
-	glfwTerminate();
+	g_system.Deinit();
 	return 0;
 }

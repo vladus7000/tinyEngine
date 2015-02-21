@@ -9,6 +9,8 @@ set (SRCS
 	./code/Model.cpp
 	./code/ShaderProgram.cpp
 	./code/Stage.cpp
+	./code/System.cpp
+	./code/FileAbstraction.cpp
 	./third_party/json/json.cpp
 )
 
