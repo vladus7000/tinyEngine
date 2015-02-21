@@ -1,0 +1,15 @@
+newmtl Model001_Material001
+map_Kd SirenHands_Dif.jpg
+map_Kn SirenHands_Nrm.jpg
+
+newmtl Model001_Material002
+map_Kd SirenBody_Bm.jpg
+map_Kn SirenBody_Nrm.jpg
+
+newmtl Model001_Material003
+map_Kd SirenHead_Bm.jpg
+map_Kn SirenHead_Nrm.jpg
+
+newmtl Model001_Material004
+map_Kd Mouth.jpg
+map_Kn SirenHead_Nrm.jpg

@@ -1,0 +1,9 @@
+{
+    "WindowSettings": {
+        "width": 1024,
+        "height": 768,
+	"title" : "Engine!"
+    },
+    "Shader" : {"vert":"shaders/simple.vert", "frag":"shaders/simple.frag"},
+    "InitScript" : "scripts/script.lua"
+}

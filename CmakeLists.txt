@@ -1,0 +1,43 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(tinyEngine)
+
+set (SRCS 
+	./code/main.cpp
+	./code/Material.cpp
+	./code/Mesh.cpp
+	./code/Model.cpp
+	./code/ShaderProgram.cpp
+	./code/Stage.cpp
+	./third_party/json/json.cpp
+)
+
+include_directories(
+	./third_party/glm
+	./third_party/LuaBridge
+	./third_party/glfw/include
+	./third_party
+	./third_party/json
+	./third_party/assimp/include
+	./third_party/FreeImage
+	./third_party/glew/include
+	./third_party/lua/include
+)
+
+
+
+IF(WIN32)
+	link_directories(
+		${CMAKE_SOURCE_DIR}/third_party/assimp
+		${CMAKE_SOURCE_DIR}/third_party/FreeImage
+		${CMAKE_SOURCE_DIR}/third_party/glfw/lib-vc2012
+		${CMAKE_SOURCE_DIR}/third_party/glew/lib/Release/Win32
+		${CMAKE_SOURCE_DIR}/third_party/lua
+	)
+ELSE(UNIX)
+	
+ENDIF()
+
+add_executable(Engine ${SRCS})
+
+target_link_libraries(Engine glew32 glew32s opengl32 assimp FreeImage glfw3 lua52)

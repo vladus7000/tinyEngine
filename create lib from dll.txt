@@ -1,0 +1,10 @@
+https://adrianhenke.wordpress.com/2008/12/05/create-lib-file-from-dll/
+Open the Visual Studio Command Prompt, you find its shortcut in 
+Start->Programs->Microsoft Visual Studio->Tools. 
+Now run the dumpbin command to get a list of all exported functions of your dll:
+
+dumpbin /exports C:\yourpath\yourlib.dll > C:\yourlib.out
+get all names from dll
+for instance for lua:
+grep -ro "\w*lua\w*" ./out/yourlib.out > yourlib.def
+lib /def:C:\mypath\yourlib.def /OUT:C:\mypath\yourlib.lib
